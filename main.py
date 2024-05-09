@@ -1,6 +1,8 @@
 
 import cv2
+import matplotlib.pyplot as plt
 import numpy as np
+import pickle
 
 # Cargar la imagen
 image = cv2.imread('data/boceto.jpg')
@@ -23,50 +25,12 @@ for contour in contours:
         cv2.drawContours(image, [contour], -1, (0, 0, 0), 2)
 
 
-print(f"Contornos detectados: {contours}")
+contours = contours[::-1]
 
+with open('data/contours.txt', 'w') as file:  # Cambio aquí: 'w' en lugar de 'wb'
+    for i, contorno in enumerate(contours):
+        file.write(f"Contorno {i}:\n")
+        for punto in contorno:
+            file.write(f"{punto[0][0]}, {punto[0][1]}\n")
+        file.write("\n")
 
-# Clasificar los contornos detectados en categorías
-botones = []
-campos_texto = []
-imagenes = []
-
-# Umbral inicial para los botones
-umbral_botones = 500
-# Umbral inicial para los campos de texto
-umbral_campos_texto = 200
-
-for contour in contours:
-    # Calcular el área del contorno
-    area = cv2.contourArea(contour)
-    if area > 100:  # Filtro para eliminar contornos pequeños
-        # Clasificar los contornos en categorías
-        # Aquí necesitarás implementar un método para identificar y clasificar los contornos
-        # Puedes utilizar técnicas como la comparación de áreas, la forma de los contornos, etc.
-        # Dependiendo de tu imagen y la complejidad de los contornos, este proceso puede ser más o menos complejo
-
-        # Ejemplo de cómo podrías clasificar los contornos:
-        if area > umbral_botones:
-            botones.append(contour)
-        elif area > umbral_campos_texto:
-            campos_texto.append(contour)
-        else:
-            imagenes.append(contour)
-
-print(f"Botones: {len(botones)}")
-print(f"Campos de texto: {len(campos_texto)}")
-print(f"Imágenes: {len(imagenes)}")
-
-# Mostrar la imagen con los contornos detectados
-cv2.imshow('Contornos', image)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
-
-
-# Generar el diseño en Figma
-# Aquí necesitarás implementar la lógica para crear los marcos y organizar los componentes en Figma
-# Puedes utilizar la API de Figma para interactuar con tu diseño en Figma desde Python, si es necesario
-
-# Estilizar y refinar el diseño en Figma
-
-# Exportar el diseño en Figma
