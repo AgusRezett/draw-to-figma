@@ -1,33 +1,63 @@
-import cv2
-import matplotlib.pyplot as plt
+import re
+from src.image_processing import load_and_preprocess_image, contours_to_text, extract_features_and_text
+from src.instantneo_integration import classify_contours
+from src.figma_integration import create_figma_frame, get_figma_file_structure
+import os
+from dotenv import load_dotenv
+load_dotenv()
+from agents.classifier_role import classifier_description
+from src.files_management import save_contours, load_contours
 
-# Cargar la imagen
-image = cv2.imread('data/boceto.jpg')
-image2 = cv2.imread('data/blanco.jpg')
+instantneo_api_key = os.getenv("INSTANTNEO_API_KEY")
+instantneo_model = os.getenv("INSTANTNEO_MODEL")
+figma_token = os.getenv("FIGMA_TOKEN")
+file_id = os.getenv("FILE_ID")
 
-# Convertir la imagen a escala de grises
-gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+def parse_classification_results(results):
+    print("Classification Results:", results)
+    """Parsea el string de resultados para extraer la cantidad de cada componente."""
+    pattern = r"-\s*(Text|Input|Button):\s*(\d+)"
+    matches = re.findall(pattern, results)
+    return {match[0]: int(match[1]) for match in matches}
 
-# Aplicar umbralización adaptativa
-thresh = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, 11, 10)
+def main(image_path, api_key, model, figma_token, file_id):
+    if image_path is None:
+        raise ValueError("No se pudo cargar la imagen. Verifica la ruta del archivo.")
 
-# Buscar contornos en la imagen umbralizada
-contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    aislated_contours, components_contours = load_and_preprocess_image(image_path)
 
-# Dibujar los contornos impares en la imagen original con color negro
-for i, contour in enumerate(contours):
-    # Dibujar el contorno en la imagen blanca con color negro
-    cv2.drawContours(image2, [contour], -1, (0, 0, 0), 1)
-    # Obtener el punto inicial del contorno
-    x, y = contour[0][0]
+    # Extraer características y texto de los contornos
+    # contours_text = contours_to_text(contours)
 
-# Guardar la imagen con los contornos y etiquetas
-cv2.imwrite('contornos.jpg', image2)
+    # Guardar contornos en un archivo de texto para pruebas
+    save_contours(components_contours)
 
-with open('data/contours.txt', 'w') as file:  # Cambio aquí: 'w' en lugar de 'wb'
-    for i, contorno in enumerate(contours):
-        file.write(f"Contorno {i}:\n")
-        for punto in contorno:
-            file.write(f"{punto[0][0]}, {punto[0][1]}\n")
-        file.write("\n")
+    """
+    text_data = extract_text_from_contours(image_path, "contours.txt")
+    # Procesar y almacenar metadatos
+    for data in text_data:
+        print(f"Contorno en {data['coordinates']} con texto: {data['text']}")
+    """
 
+    classification_results = classify_contours(api_key, model, classifier_description, load_contours())
+    
+    # Parsear los resultados de clasificación
+    parsed_results = parse_classification_results(classification_results)
+    print("Parsed Classification Results:", parsed_results)
+    
+    file_structure = get_figma_file_structure(figma_token, file_id)
+    document_id = file_structure['document']['id']
+    
+    # Asumir una posición y tamaño estándar para el ejemplo
+    position = {'x': 100, 'y': 100}
+    size = {'width': 100, 'height': 50}
+
+    # Crear frames para cada tipo de componente detectado
+    for component_type, count in parsed_results.items():
+        for _ in range(count):
+            create_figma_frame(figma_token, file_id, document_id, component_type, position, size)
+            # Ajustar la posición para el siguiente componente del mismo tipo
+            position['y'] += 60  # Aumentar en 60 la posición y para no solapar componentes
+
+if __name__ == "__main__":
+    main("data/boceto.jpg", instantneo_api_key, instantneo_model, figma_token, file_id)
