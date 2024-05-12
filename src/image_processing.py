@@ -31,6 +31,7 @@ def extract_text_from_contours(image_path, contours_path):
     return text_data
 
 def load_and_preprocess_image(image_path):
+    print(image_path)
     """Carga y preprocesa una imagen para detectar contornos."""
     image = cv2.imread(image_path)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
