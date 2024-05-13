@@ -14,6 +14,8 @@ def preprocess_image(image_path):
     # Extraer características y texto de los contornos
     # contours_text = contours_to_text(contours)
 
+    
+
     # Guardar contornos en un archivo de texto para pruebas
     save_contours(components_contours)
 

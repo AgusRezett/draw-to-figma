@@ -12,7 +12,6 @@ class SketchToDesignOrchestrator:
         # Preprocessing
         preprocess_image(self.image_path)
         
-        # Detect components
         self.components = detect_components()
 
         print("Components:", self.components)
