@@ -31,22 +31,22 @@ def extract_text_from_contours(image_path, contours_path):
     return text_data
 
 def load_and_preprocess_image(image_path):
-    print(image_path)
-    """Carga y preprocesa una imagen para detectar contornos."""
     image = cv2.imread(image_path)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    _, thresh = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY_INV)
-    aislated_contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+    gray = clahe.apply(gray)
+    # gray = cv2.GaussianBlur(gray, (5, 5), 0)
 
-    # Dilatar para unir contornos cercanos
+    _, thresh = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY_INV)
+    # Usar cv2.RETR_CCOMP para capturar todos los contornos incluyendo internos
+    aislated_contours, _ = cv2.findContours(thresh, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
     kernel = np.ones((5, 5), np.uint8)
     dilated = cv2.dilate(thresh, kernel, iterations=3)
-    
-    # Encontrar contornos en la imagen dilatada
-    components_contours, _ = cv2.findContours(dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    # Encontrar contornos en la imagen dilatada con la misma jerarquía
+    components_contours, _ = cv2.findContours(dilated, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
 
     return aislated_contours, components_contours
-
 
 
 def contours_to_text(contours):
