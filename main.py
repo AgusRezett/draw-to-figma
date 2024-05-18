@@ -1,5 +1,5 @@
-from processes.sketch_process_init import preprocess_image
-from processes.detection_process_init import detect_components
+from processes.sketch_process_init import preprocess_image, preprocess_text, predict_component
+from model.yolo_model import detect_objects
 
 class SketchToDesignOrchestrator:
     def __init__(self, image_path):
@@ -10,28 +10,23 @@ class SketchToDesignOrchestrator:
 
     def process_image(self):
         # Preprocessing
-        preprocess_image(self.image_path)
-        
-        self.components = detect_components()
+        processed_image = preprocess_image(self.image_path)
+        print(f"Imagen preprocesada: {processed_image.shape}")
 
-        print("Components:", self.components)
-        """ 
-        # Recognize text within components
-        self.texts = recognize_text(self.components)
-        
-        # Classify components
-        classified_components = classify_components(self.components, self.texts)
-        
-        # Adapt components to HIG
-        adapted_components = adapt_to_hig(classified_components)
-        
-        # Generate Figma design
-        self.design = generate_figma_design(adapted_components)
-        """
-    def get_design(self):
-        return self.design
+        description = "Este es un botón para enviar el formulario."
+        processed_text = preprocess_text(description)
+        print(f"Texto preprocesado: {processed_text}")
+
+        # predicted_class, predictions = predict_component(processed_image)
+        # print(f'Predicted class: {predicted_class}')
+        # print(f'Predictions: {predictions}')
+
+        detected_components = detect_objects(self.image_path)
+
+        # Imprimir los componentes detectados
+        for component in detected_components:
+            print(f"Detected {component['label']} with confidence {component['confidence']} at {component['box']}")
 
 # Usage
 orchestrator = SketchToDesignOrchestrator("sketch.jpg")
 orchestrator.process_image()
-design = orchestrator.get_design()
